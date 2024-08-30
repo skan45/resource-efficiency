@@ -1,0 +1,49 @@
+name: Python CI
+
+on:
+  workflow_dispatch:
+jobs:
+  install-and-cache-dependencies:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+      - name: Cache pip dependencies
+        id: cache-pip
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+  test-import-dependencies:
+    needs: install-and-cache-dependencies
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        dependency: [flask, pydantic, requests, numpy, pandas, scikit-learn, tensorflow, gunicorn]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install dependencies from cache
+        run: pip install -r requirements.txt
+
+      - name: Test importing ${{ matrix.dependency }}
+        run: |
+          python -c "import ${{ matrix.dependency }}"
+
