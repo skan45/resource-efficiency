@@ -2,16 +2,19 @@ name: Python CI
 
 on:
   workflow_dispatch:
+
 jobs:
   install-and-cache-dependencies:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: 3.11
+
       - name: Cache pip dependencies
         id: cache-pip
         uses: actions/cache@v3
@@ -23,6 +26,12 @@ jobs:
 
       - name: Install dependencies
         run: pip install -r requirements.txt
+
+      - name: Save dependencies in cache
+        if: steps.cache-pip.outputs.cache-hit != 'true'
+        run: |
+          pip freeze > installed.txt
+          echo "Dependencies cached"
 
   test-import-dependencies:
     needs: install-and-cache-dependencies
@@ -40,7 +49,13 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install dependencies from cache
+      - name: Restore pip dependencies from cache
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ needs.install-and-cache-dependencies.outputs.cache-pip }}
+
+      - name: Install dependencies from cache or requirements
         run: pip install -r requirements.txt
 
       - name: Test importing ${{ matrix.dependency }}
