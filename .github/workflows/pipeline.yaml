@@ -53,7 +53,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ needs.install-and-cache-dependencies.outputs.cache-pip }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
 
       - name: Install dependencies from cache or requirements
         run: pip install -r requirements.txt
@@ -61,4 +61,3 @@ jobs:
       - name: Test importing ${{ matrix.dependency }}
         run: |
           python -c "import ${{ matrix.dependency }}"
-
